@@ -1,4 +1,4 @@
-﻿using RuriLib.Attributes;
+using RuriLib.Attributes;
 using RuriLib.Logging;
 using RuriLib.Models.Bots;
 
@@ -8,6 +8,7 @@ using RuriLib.Models.Settings;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Firefox;
 using System;
+using System.Collections.Generic;
 using OpenQA.Selenium;
 using System.Linq;
 using System.Drawing;
@@ -19,7 +20,7 @@ namespace RuriLib.Blocks.Selenium.Browser
     public static class Methods
     {
         [Block("Opens a new selenium browser", name = "Open Browser")]
-        public static void SeleniumOpenBrowser(BotData data, string extraCmdLineArgs = "")
+        public static void SeleniumOpenBrowser(BotData data, string extraCmdLineArgs = "", string userAgent = "", Dictionary<string, string> setPreference = null)
         {
             data.Logger.LogHeader();
 
@@ -151,6 +152,35 @@ namespace RuriLib.Blocks.Selenium.Browser
                             }
                         }
                     }
+                    if (!string.IsNullOrWhiteSpace(userAgent))
+                        {
+                            fireprofile.SetPreference("general.useragent.override", userAgent);
+                        }
+                    if (setPreference != null)
+                        {
+                            foreach (var kvp in setPreference)
+                                {
+                                    string key = kvp.Key;
+                                    string value = kvp.Value;
+                                    bool boolValue;
+                                    int intValue;
+                                        if (bool.TryParse(value, out boolValue))
+                                        {
+                                            data.Logger.Log($"Pref: {key}, Boolean: {boolValue}");
+                                            fireprofile.SetPreference(key, boolValue);
+                                        }
+                                        else if (int.TryParse(value, out intValue))
+                                        {
+                                            data.Logger.Log($"Pref: {key}, Integer: {intValue}");
+                                            fireprofile.SetPreference(key, intValue);
+                                        }
+                                        else
+                                        {
+                                            data.Logger.Log($"Pref: {key}, String: {value}");
+                                            fireprofile.SetPreference(key, value);
+                                        }   
+                                }
+                        }                 
 
                     fireop.Profile = fireprofile;
                     data.SetObject("selenium", new FirefoxDriver(fireservice, fireop, new TimeSpan(0, 1, 0)));
